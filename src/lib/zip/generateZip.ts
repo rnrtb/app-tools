@@ -75,19 +75,11 @@ export async function generateStampZip(
   current += 1
 
   report('ZIPを作成しています…')
-  const zipBlob = await zip.generateAsync({
+  return zip.generateAsync({
     type: 'blob',
     compression: 'DEFLATE',
     compressionOptions: { level: 6 },
   })
-
-  if (zipBlob.size > spec.maxZipSizeBytes) {
-    throw new Error(
-      `ZIPの容量が上限（${Math.round(spec.maxZipSizeBytes / (1024 * 1024))}MB）を超えています。画像を減らすか小さく調整してください。`,
-    )
-  }
-
-  return zipBlob
 }
 
 export async function downloadStampZip(

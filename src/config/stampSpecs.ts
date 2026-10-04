@@ -26,6 +26,7 @@ export interface StampTypeSpec {
   canvasSize: SizeSpec
   mainSize: SizeSpec
   tabSize: SizeSpec
+  /** 将来（アニメーション等）の容量チェック用。静止画初版のUIでは未使用 */
   maxFileSizeBytes: number
   maxZipSizeBytes: number
   format: 'png'

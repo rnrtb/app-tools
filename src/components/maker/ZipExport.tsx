@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { downloadStampZip } from '../../lib/zip/generateZip'
 import { sanitizeZipBaseName } from '../../lib/utils/filename'
 import { toUserFriendlyError } from '../../lib/utils/errors'
-import { validateProjectStrict } from '../../lib/validation/validate'
+import { validateProjectLight } from '../../lib/validation/validate'
 import type { StampProject } from '../../types/stamp'
 import { useCanCreateZip } from '../../hooks/useCanCreateZip'
 
@@ -20,11 +20,11 @@ export function ZipExport({ project, onZipNameChange }: Props) {
   const handleCreate = async () => {
     setError(null)
     setBusy(true)
-    setProgress('最終チェックをしています…')
+    setProgress('ZIPを作成しています…')
     try {
-      const strict = await validateProjectStrict(project)
-      if (!strict.canCreateZip) {
-        const firstError = strict.items.find((i) => i.level === 'error')
+      const check = validateProjectLight(project)
+      if (!check.canCreateZip) {
+        const firstError = check.items.find((i) => i.level === 'error')
         throw new Error(firstError?.message || 'ZIPを作成できません。内容を確認してください。')
       }
       await downloadStampZip(
