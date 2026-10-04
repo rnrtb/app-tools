@@ -10,6 +10,10 @@ const STYLES: Record<PreviewBackgroundType, CSSProperties> = {
     backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0',
   },
   white: { backgroundColor: '#ffffff' },
+  /** LINE default light — sticker panel */
+  lineLight: { backgroundColor: '#ffffff' },
+  /** LINE default dark — sticker panel */
+  lineDark: { backgroundColor: '#1A1A1A' },
   black: { backgroundColor: '#111111' },
   gray: { backgroundColor: '#9aa0a6' },
   line: {

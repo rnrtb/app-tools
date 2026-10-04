@@ -44,9 +44,9 @@ export async function generateStampZip(
 
   const mainSource = resolveSpecialSource(project.main, project.stamps)
   if (!mainSource) {
-    throw new Error('main画像が設定されていません。')
+    throw new Error('メイン画像が設定されていません。')
   }
-  report('main画像を作成しています…')
+  report('メイン画像を作成しています…')
   const mainBlob = await renderBlobToPng({
     sourceBlob: mainSource.blob,
     canvasWidth: spec.mainSize.width,
@@ -60,9 +60,9 @@ export async function generateStampZip(
 
   const tabSource = resolveSpecialSource(project.tab, project.stamps)
   if (!tabSource) {
-    throw new Error('tab画像が設定されていません。')
+    throw new Error('トークルームタブ画像が設定されていません。')
   }
-  report('tab画像を作成しています…')
+  report('トークルームタブ画像を作成しています…')
   const tabBlob = await renderBlobToPng({
     sourceBlob: tabSource.blob,
     canvasWidth: spec.tabSize.width,

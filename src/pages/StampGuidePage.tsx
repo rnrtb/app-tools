@@ -28,8 +28,8 @@ export function StampGuidePage() {
           <li>LINE用サイズへ自動調整</li>
           <li>タッチで位置・大きさ調整</li>
           <li>並べ替え</li>
-          <li>main画像作成</li>
-          <li>tab画像作成</li>
+          <li>メイン画像作成</li>
+          <li>トークルームタブ画像作成</li>
           <li>LINE仕様チェック</li>
           <li>ZIP一括生成</li>
         </ul>

@@ -73,34 +73,24 @@ export function validateProjectLight(project: StampProject): ValidationResult {
     message: 'PNG形式',
   })
 
-  const opaqueCount = project.stamps.filter((s) => !s.hasTransparency).length
-  if (opaqueCount > 0) {
-    items.push({
-      id: 'transparency',
-      label: '透過',
-      level: 'warn',
-      message: `${opaqueCount}枚の画像に透明部分がありません（JPEGなど）。そのまま作成できます。`,
-    })
-  }
-
   const mainSource = resolveSpecialSource(project.main, project.stamps)
   items.push({
     id: 'main',
-    label: 'main画像',
+    label: 'メイン画像',
     level: mainSource ? 'ok' : 'error',
     message: mainSource
-      ? `main画像　${spec.mainSize.width}×${spec.mainSize.height}`
-      : 'main画像を設定してください',
+      ? `メイン画像　${spec.mainSize.width}×${spec.mainSize.height}`
+      : 'メイン画像を設定してください',
   })
 
   const tabSource = resolveSpecialSource(project.tab, project.stamps)
   items.push({
     id: 'tab',
-    label: 'tab画像',
+    label: 'トークルームタブ画像',
     level: tabSource ? 'ok' : 'error',
     message: tabSource
-      ? `tab画像　${spec.tabSize.width}×${spec.tabSize.height}`
-      : 'tab画像を設定してください',
+      ? `トークルームタブ画像　${spec.tabSize.width}×${spec.tabSize.height}`
+      : 'トークルームタブ画像を設定してください',
   })
 
   items.push({
@@ -195,17 +185,17 @@ export async function validateProjectStrict(project: StampProject): Promise<Vali
     if (mainBlob.size > spec.maxFileSizeBytes) {
       items.push({
         id: 'main-capacity',
-        label: 'main容量',
+        label: 'メイン画像容量',
         level: 'error',
-        message: 'main画像の容量が1MBを超えています。小さく調整してください',
+        message: 'メイン画像の容量が1MBを超えています。小さく調整してください',
       })
     }
   } catch {
     items.push({
       id: 'main-capacity',
-      label: 'main容量',
+      label: 'メイン画像容量',
       level: 'error',
-      message: 'main画像を確認してください',
+      message: 'メイン画像を確認してください',
     })
   }
 
@@ -221,17 +211,17 @@ export async function validateProjectStrict(project: StampProject): Promise<Vali
     if (tabBlob.size > spec.maxFileSizeBytes) {
       items.push({
         id: 'tab-capacity',
-        label: 'tab容量',
+        label: 'トークルームタブ画像容量',
         level: 'error',
-        message: 'tab画像の容量が1MBを超えています。小さく調整してください',
+        message: 'トークルームタブ画像の容量が1MBを超えています。小さく調整してください',
       })
     }
   } catch {
     items.push({
       id: 'tab-capacity',
-      label: 'tab容量',
+      label: 'トークルームタブ画像容量',
       level: 'error',
-      message: 'tab画像を確認してください',
+      message: 'トークルームタブ画像を確認してください',
     })
   }
 

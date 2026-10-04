@@ -58,8 +58,6 @@ export function StampCard({ item, index, previewBackground, onEdit, onReplace, o
         />
       </button>
 
-      {!item.hasTransparency && <p className="stamp-meta">透明部分なし</p>}
-
       <div className="stamp-card-actions">
         <button type="button" className="btn btn-small" onClick={onEdit}>
           編集

@@ -565,11 +565,15 @@ input {
 }
 
 .editor-stage-wrap {
+  display: flex;
+  justify-content: center;
   width: 100%;
 }
 
 .editor-stage {
-  width: 100%;
+  position: relative;
+  /* width はインラインで aspect に応じて指定。高さは aspect-ratio で決める */
+  max-width: 100%;
   max-height: min(58vh, 520px);
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -577,6 +581,8 @@ input {
 }
 
 .editor-canvas {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   cursor: grab;

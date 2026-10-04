@@ -16,7 +16,6 @@ interface Props {
   initialTransform: TransformState
   previewBackground: PreviewBackgroundType
   onPreviewBackgroundChange: (value: PreviewBackgroundType) => void
-  hasTransparency: boolean
   onCancel: () => void
   onComplete: (transform: TransformState) => void
 }
@@ -32,7 +31,6 @@ export function TransformEditor({
   initialTransform,
   previewBackground,
   onPreviewBackgroundChange,
-  hasTransparency,
   onCancel,
   onComplete,
 }: Props) {
@@ -48,9 +46,23 @@ export function TransformEditor({
   })
 
   useEffect(() => {
+    let cancelled = false
     const img = new Image()
-    img.onload = () => setImage(img)
+    const markReady = () => {
+      if (!cancelled) setImage(img)
+    }
+    img.onload = markReady
+    img.onerror = () => {
+      if (!cancelled) setImage(null)
+    }
     img.src = imageUrl
+    // Cached / already-decoded blob URLs may not fire onload again.
+    if (img.complete && img.naturalWidth > 0) {
+      markReady()
+    }
+    return () => {
+      cancelled = true
+    }
   }, [imageUrl])
 
   useEffect(() => {
@@ -72,6 +84,8 @@ export function TransformEditor({
   )
 
   const aspect = canvasWidth / canvasHeight
+  // 線幅の半分がはみ出して切れないよう、ガイドをわずかに内側へ
+  const guideInset = 1
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
@@ -108,7 +122,10 @@ export function TransformEditor({
           <PreviewBackground
             variant={previewBackground}
             className="editor-stage"
-            style={{ aspectRatio: `${aspect}` }}
+            style={{
+              aspectRatio: `${canvasWidth} / ${canvasHeight}`,
+              width: `min(100%, calc(min(58vh, 520px) * ${aspect}))`,
+            }}
           >
             <div
               ref={stageRef}
@@ -116,32 +133,45 @@ export function TransformEditor({
               style={{ touchAction: 'none' }}
               {...handlers}
             >
+              {/*
+                Use <img> (same as list preview), not SVG <image href>.
+                Restored IndexedDB blob: URLs often fail to paint inside SVG
+                while still loading fine for HTML img / export.
+              */}
+              {image ? (
+                <img
+                  src={imageUrl}
+                  alt=""
+                  draggable={false}
+                  style={{
+                    position: 'absolute',
+                    left: `${(transform.offsetX / canvasWidth) * 100}%`,
+                    top: `${(transform.offsetY / canvasHeight) * 100}%`,
+                    width: `${((imageWidth * transform.scale) / canvasWidth) * 100}%`,
+                    height: `${((imageHeight * transform.scale) / canvasHeight) * 100}%`,
+                    objectFit: 'fill',
+                    pointerEvents: 'none',
+                  }}
+                />
+              ) : null}
               <svg
                 className="editor-svg"
                 viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
                 width="100%"
                 height="100%"
                 aria-hidden="true"
+                style={{ pointerEvents: 'none' }}
               >
-                {image && (
-                  <image
-                    href={imageUrl}
-                    x={transform.offsetX}
-                    y={transform.offsetY}
-                    width={imageWidth * transform.scale}
-                    height={imageHeight * transform.scale}
-                    preserveAspectRatio="none"
-                  />
-                )}
                 <rect
-                  x={safeMargin}
-                  y={safeMargin}
-                  width={canvasWidth - safeMargin * 2}
-                  height={canvasHeight - safeMargin * 2}
+                  x={safeMargin + guideInset}
+                  y={safeMargin + guideInset}
+                  width={canvasWidth - safeMargin * 2 - guideInset * 2}
+                  height={canvasHeight - safeMargin * 2 - guideInset * 2}
                   fill="none"
-                  stroke="rgba(15, 23, 42, 0.45)"
+                  stroke="rgba(15, 23, 42, 0.55)"
                   strokeDasharray="6 4"
                   strokeWidth={2}
+                  vectorEffect="non-scaling-stroke"
                 />
               </svg>
             </div>
@@ -151,11 +181,6 @@ export function TransformEditor({
         {outside && (
           <p className="notice notice-warn" role="status">
             推奨の余白（約{safeMargin}px）を超えています。必要なら「全体を収める」で戻せます。
-          </p>
-        )}
-        {!hasTransparency && (
-          <p className="notice" role="status">
-            透明部分がありません（JPEGなど）。そのままスタンプにできます。
           </p>
         )}
 

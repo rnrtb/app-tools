@@ -4,6 +4,8 @@ export type PreviewBackground =
   | 'black'
   | 'gray'
   | 'line'
+  | 'lineLight'
+  | 'lineDark'
 
 export interface TransformState {
   scale: number

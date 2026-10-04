@@ -14,7 +14,7 @@ export function LineIndexPage() {
       <section className="card-list">
         <Link to="/line/stamp" className="tool-card">
           <h2>LINEスタンプ画像メーカー</h2>
-          <p>画像を並べて、main / tab を整え、アップロード用ZIPを作成</p>
+          <p>画像を並べて、メイン画像・トークルームタブ画像を整え、アップロード用ZIPを作成</p>
         </Link>
       </section>
 

@@ -34,7 +34,7 @@ export function SpecialImageSection({
   const spec = getStampSpec()
   const size = kind === 'main' ? spec.mainSize : spec.tabSize
   const safeMargin = kind === 'main' ? 8 : 4
-  const title = kind === 'main' ? 'main画像' : 'tab画像'
+  const title = kind === 'main' ? 'メイン画像' : 'トークルームタブ画像'
   const inputRef = useRef<HTMLInputElement>(null)
   const [editing, setEditing] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -99,7 +99,7 @@ export function SpecialImageSection({
         <div className="special-actions">
           <p className="special-source">
             {special.source === 'upload'
-              ? `専用画像：${special.originalName || 'アップロード済み'}`
+              ? `アップロード：${special.originalName || '済み'}`
               : special.stampId
                 ? 'スタンプから選択中'
                 : '未設定'}
@@ -113,7 +113,7 @@ export function SpecialImageSection({
             スタンプから選ぶ
           </button>
           <button type="button" className="btn" onClick={() => inputRef.current?.click()}>
-            専用画像を選ぶ
+            アップロード
           </button>
           <button
             type="button"
@@ -128,7 +128,7 @@ export function SpecialImageSection({
 
       {pickerOpen && (
         <div className="stamp-picker">
-          <p>main / tab に使うスタンプを選んでください</p>
+          <p>{title}に使うスタンプ画像を選んでください</p>
           <div className="stamp-picker-grid">
             {stamps.map((stamp, index) => (
               <button
@@ -172,7 +172,6 @@ export function SpecialImageSection({
           initialTransform={resolved.transform}
           previewBackground={previewBackground}
           onPreviewBackgroundChange={onPreviewBackgroundChange}
-          hasTransparency={resolved.hasTransparency}
           onCancel={() => setEditing(false)}
           onComplete={(transform) => {
             onTransformComplete(transform)

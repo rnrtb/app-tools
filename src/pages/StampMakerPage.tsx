@@ -134,7 +134,7 @@ export function StampMakerPage() {
 
       <section className="panel">
         <div className="panel-head">
-          <h2>スタンプ一覧</h2>
+          <h2>スタンプ画像</h2>
           <p>編集・差し替え・削除・並べ替えができます</p>
         </div>
         <StampList
@@ -193,7 +193,6 @@ export function StampMakerPage() {
           initialTransform={editingStamp.transform}
           previewBackground={project.previewBackground}
           onPreviewBackgroundChange={setPreviewBackground}
-          hasTransparency={editingStamp.hasTransparency}
           onCancel={() => setEditingId(null)}
           onComplete={(transform) => {
             updateStampTransform(editingStamp.id, transform)
