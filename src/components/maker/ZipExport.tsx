@@ -87,10 +87,10 @@ export function ZipExport({ project, onZipNameChange }: Props) {
 
       <p className="hint">
         作成後は{' '}
-        <a href="https://creator.line.me/" target="_blank" rel="noreferrer">
-          LINE Creators Market
-        </a>{' '}
-        でZIPをアップロードしてください。
+        <a href="https://creator.line.me/signup/line_auth" target="_blank" rel="noreferrer">
+          Creators Marketへ進む
+        </a>
+        （ログインしてZIPをアップロード）
       </p>
     </section>
   )

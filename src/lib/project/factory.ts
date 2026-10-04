@@ -39,7 +39,7 @@ export function createEmptyProject(): StampProject {
     main: createEmptySpecialImage(),
     tab: createEmptySpecialImage(),
     zipName: 'line-stamp',
-    previewBackground: 'checker',
+    previewBackground: 'line',
     updatedAt: Date.now(),
   }
 }
@@ -230,7 +230,8 @@ export function resolveSpecialSource(
     }
   }
 
-  const stamp = stamps.find((s) => s.id === special.stampId) ?? stamps[0]
+  if (!special.stampId) return null
+  const stamp = stamps.find((s) => s.id === special.stampId)
   if (!stamp) return null
 
   return {

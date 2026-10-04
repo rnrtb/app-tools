@@ -144,27 +144,16 @@ export function useStampProject() {
     setSaveStatus('idle')
   }, [pendingRestore])
 
-  const ensureMainTabDefaults = useCallback((stamps: StampImageItem[], main: SpecialImageState, tab: SpecialImageState) => {
-    const spec = getStampSpec()
+  /** 参照先スタンプが消えたときだけクリア。自動選択はしない */
+  const syncMainTabWithStamps = useCallback((stamps: StampImageItem[], main: SpecialImageState, tab: SpecialImageState) => {
     let nextMain = main
     let nextTab = tab
-    const first = stamps[0]
 
-    if (first) {
-      if (!main.stampId && main.source === 'stamp' && !main.workingBlob) {
-        nextMain = specialFromStamp(first, spec.mainSize, 8)
-      } else if (main.source === 'stamp' && main.stampId && !stamps.some((s) => s.id === main.stampId)) {
-        nextMain = specialFromStamp(first, spec.mainSize, 8)
-      }
-
-      if (!tab.stampId && tab.source === 'stamp' && !tab.workingBlob) {
-        nextTab = specialFromStamp(first, spec.tabSize, 4)
-      } else if (tab.source === 'stamp' && tab.stampId && !stamps.some((s) => s.id === tab.stampId)) {
-        nextTab = specialFromStamp(first, spec.tabSize, 4)
-      }
-    } else {
-      if (main.source === 'stamp') nextMain = { ...main, stampId: null, width: 0, height: 0 }
-      if (tab.source === 'stamp') nextTab = { ...tab, stampId: null, width: 0, height: 0 }
+    if (main.source === 'stamp' && main.stampId && !stamps.some((s) => s.id === main.stampId)) {
+      nextMain = { ...main, stampId: null, width: 0, height: 0, originalName: '' }
+    }
+    if (tab.source === 'stamp' && tab.stampId && !stamps.some((s) => s.id === tab.stampId)) {
+      nextTab = { ...tab, stampId: null, width: 0, height: 0, originalName: '' }
     }
 
     return { main: nextMain, tab: nextTab }
@@ -190,7 +179,7 @@ export function useStampProject() {
       if (created.length) {
         updateProject((prev) => {
           const stamps = [...prev.stamps, ...created]
-          const { main, tab } = ensureMainTabDefaults(stamps, prev.main, prev.tab)
+          const { main, tab } = syncMainTabWithStamps(stamps, prev.main, prev.tab)
           return { ...prev, stamps, main, tab }
         })
       }
@@ -199,37 +188,7 @@ export function useStampProject() {
         setActionError(errors.slice(0, 3).join('\n'))
       }
     },
-    [ensureMainTabDefaults, updateProject],
-  )
-
-  const replaceStamp = useCallback(
-    async (id: string, file: File) => {
-      setActionError(null)
-      try {
-        const nextItem = await createStampFromFile(file)
-        const spec = getStampSpec()
-        updateProject((prev) => {
-          const old = prev.stamps.find((s) => s.id === id)
-          if (old) revokeStampItem(old)
-          const replaced = { ...nextItem, id }
-          const stamps = prev.stamps.map((s) => (s.id === id ? replaced : s))
-
-          let main = prev.main
-          let tab = prev.tab
-          if (main.source === 'stamp' && main.stampId === id) {
-            main = specialFromStamp(replaced, spec.mainSize, 8)
-          }
-          if (tab.source === 'stamp' && tab.stampId === id) {
-            tab = specialFromStamp(replaced, spec.tabSize, 4)
-          }
-
-          return { ...prev, stamps, main, tab }
-        })
-      } catch (error) {
-        setActionError(toUserFriendlyError(error))
-      }
-    },
-    [updateProject],
+    [syncMainTabWithStamps, updateProject],
   )
 
   const removeStamp = useCallback(
@@ -250,11 +209,11 @@ export function useStampProject() {
         }, 5000)
 
         const stamps = prev.stamps.filter((s) => s.id !== id)
-        const { main, tab } = ensureMainTabDefaults(stamps, prev.main, prev.tab)
+        const { main, tab } = syncMainTabWithStamps(stamps, prev.main, prev.tab)
         return { ...prev, stamps, main, tab }
       })
     },
-    [ensureMainTabDefaults, updateProject],
+    [syncMainTabWithStamps, updateProject],
   )
 
   const undoRemove = useCallback(() => {
@@ -262,11 +221,11 @@ export function useStampProject() {
     updateProject((prev) => {
       const stamps = [...prev.stamps]
       stamps.splice(undo.index, 0, undo.item)
-      const { main, tab } = ensureMainTabDefaults(stamps, prev.main, prev.tab)
+      const { main, tab } = syncMainTabWithStamps(stamps, prev.main, prev.tab)
       return { ...prev, stamps, main, tab }
     })
     setUndo(null)
-  }, [undo, ensureMainTabDefaults, updateProject])
+  }, [undo, syncMainTabWithStamps, updateProject])
 
   const reorderStamps = useCallback(
     (activeId: string, overId: string) => {
@@ -344,7 +303,7 @@ export function useStampProject() {
   )
 
   const uploadMain = useCallback(
-    async (file: File) => {
+    async (file: File): Promise<boolean> => {
       setActionError(null)
       try {
         const spec = getStampSpec()
@@ -360,15 +319,17 @@ export function useStampProject() {
             },
           }
         })
+        return true
       } catch (error) {
         setActionError(toUserFriendlyError(error))
+        return false
       }
     },
     [updateProject],
   )
 
   const uploadTab = useCallback(
-    async (file: File) => {
+    async (file: File): Promise<boolean> => {
       setActionError(null)
       try {
         const spec = getStampSpec()
@@ -384,8 +345,10 @@ export function useStampProject() {
             },
           }
         })
+        return true
       } catch (error) {
         setActionError(toUserFriendlyError(error))
+        return false
       }
     },
     [updateProject],
@@ -424,7 +387,6 @@ export function useStampProject() {
     undo,
     undoRemove,
     addFiles,
-    replaceStamp,
     removeStamp,
     reorderStamps,
     updateStampTransform,

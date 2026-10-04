@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getFitScale, isOutsideSafeArea } from '../../lib/image/fit'
 import { usePointerTransform } from '../../hooks/usePointerTransform'
 import type { PreviewBackground as PreviewBackgroundType, TransformState } from '../../types/stamp'
-import { PREVIEW_BACKGROUND_OPTIONS } from '../../constants/previewBackground'
+import { BackgroundSwitch } from '../common/BackgroundSwitch'
 import { PreviewBackground } from '../common/PreviewBackground'
 
 interface Props {
@@ -52,6 +52,7 @@ export function TransformEditor({
     initial: initialTransform,
     minScale: fitScale * 0.25,
     maxScale: fitScale * 4,
+    wheelTargetRef: stageRef,
   })
 
   const relativeZoom = transform.scale / fitScale
@@ -77,14 +78,37 @@ export function TransformEditor({
   }, [imageUrl])
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
     const preventGesture = (e: Event) => e.preventDefault()
     document.addEventListener('gesturestart', preventGesture)
     document.addEventListener('gesturechange', preventGesture)
     document.addEventListener('gestureend', preventGesture)
+
+    // モーダル表示中は背面ページのホイールスクロールを止める
+    const blockBackgroundScroll = (event: WheelEvent) => {
+      const target = event.target
+      if (!(target instanceof Element)) {
+        event.preventDefault()
+        return
+      }
+      if (target.closest('.editor-canvas')) return
+      const panel = target.closest('.modal-panel')
+      if (panel instanceof HTMLElement) {
+        const canScroll = panel.scrollHeight > panel.clientHeight + 1
+        if (canScroll) return
+      }
+      event.preventDefault()
+    }
+    document.addEventListener('wheel', blockBackgroundScroll, { passive: false })
+
     return () => {
+      document.body.style.overflow = previousOverflow
       document.removeEventListener('gesturestart', preventGesture)
       document.removeEventListener('gesturechange', preventGesture)
       document.removeEventListener('gestureend', preventGesture)
+      document.removeEventListener('wheel', blockBackgroundScroll)
     }
   }, [])
 
@@ -109,25 +133,17 @@ export function TransformEditor({
       >
         <header className="modal-header">
           <h2>{title}</h2>
-          <button type="button" className="btn btn-ghost" onClick={onCancel} aria-label="閉じる">
-            閉じる
-          </button>
-        </header>
-
-        <div className="modal-toolbar">
-          <div className="bg-switch" role="group" aria-label="プレビュー背景">
-            {PREVIEW_BACKGROUND_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                className={previewBackground === opt.value ? 'is-active' : ''}
-                onClick={() => onPreviewBackgroundChange(opt.value)}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="modal-header-right">
+            <BackgroundSwitch
+              value={previewBackground}
+              onChange={onPreviewBackgroundChange}
+              ariaLabel="プレビュー背景"
+            />
+            <button type="button" className="btn btn-ghost" onClick={onCancel} aria-label="閉じる">
+              閉じる
+            </button>
           </div>
-        </div>
+        </header>
 
         <div className="editor-stage-wrap">
           <PreviewBackground

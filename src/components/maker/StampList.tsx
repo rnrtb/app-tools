@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   DndContext,
   KeyboardSensor,
@@ -14,49 +15,54 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
 import type { PreviewBackground, StampImageItem } from '../../types/stamp'
+import { StampAddTile } from './StampAddTile'
 import { StampCard } from './StampCard'
 
 interface Props {
   stamps: StampImageItem[]
   previewBackground: PreviewBackground
   onEdit: (id: string) => void
-  onReplace: (id: string, file: File) => void
   onDelete: (id: string) => void
   onReorder: (activeId: string, overId: string) => void
+  onAddFiles: (files: FileList | File[]) => void
 }
 
 export function StampList({
   stamps,
   previewBackground,
   onEdit,
-  onReplace,
   onDelete,
   onReorder,
+  onAddFiles,
 }: Props) {
+  const [isSorting, setIsSorting] = useState(false)
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: { distance: 10 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 180, tolerance: 8 },
+      activationConstraint: { delay: 160, tolerance: 10 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   )
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const finishSorting = (event: DragEndEvent) => {
+    setIsSorting(false)
     const { active, over } = event
     if (!over) return
     onReorder(String(active.id), String(over.id))
   }
 
-  if (!stamps.length) {
-    return <p className="empty-hint">まだ画像がありません。上の「画像を選択」から追加してください。</p>
-  }
-
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={() => setIsSorting(true)}
+      onDragEnd={finishSorting}
+      onDragCancel={() => setIsSorting(false)}
+    >
       <SortableContext items={stamps.map((s) => s.id)} strategy={rectSortingStrategy}>
         <div className="stamp-grid">
           {stamps.map((item, index) => (
@@ -66,10 +72,10 @@ export function StampList({
               index={index}
               previewBackground={previewBackground}
               onEdit={() => onEdit(item.id)}
-              onReplace={(file) => onReplace(item.id, file)}
               onDelete={() => onDelete(item.id)}
             />
           ))}
+          {!isSorting && <StampAddTile onFiles={onAddFiles} />}
         </div>
       </SortableContext>
     </DndContext>

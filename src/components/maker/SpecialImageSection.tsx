@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getStampSpec } from '../../config/stampSpecs'
 import { resolveSpecialSource } from '../../lib/project/factory'
 import type {
@@ -17,7 +17,7 @@ interface Props {
   previewBackground: PreviewBackgroundType
   onPreviewBackgroundChange: (value: PreviewBackgroundType) => void
   onSelectStamp: (stampId: string) => void
-  onUpload: (file: File) => void
+  onUpload: (file: File) => Promise<boolean>
   onTransformComplete: (transform: TransformState) => void
 }
 
@@ -36,31 +36,38 @@ export function SpecialImageSection({
   const safeMargin = kind === 'main' ? 8 : 4
   const title = kind === 'main' ? 'メイン画像' : 'トークルームタブ画像'
   const inputRef = useRef<HTMLInputElement>(null)
+  const openEditorAfterUpload = useRef(false)
   const [editing, setEditing] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   const resolved = useMemo(() => resolveSpecialSource(special, stamps), [special, stamps])
 
   const previewUrl = useMemo(() => {
     if (special.source === 'upload' && special.thumbUrl) return special.thumbUrl
-    const stamp = stamps.find((s) => s.id === special.stampId) ?? stamps[0]
-    return stamp?.thumbUrl ?? null
+    if (!special.stampId) return null
+    return stamps.find((s) => s.id === special.stampId)?.thumbUrl ?? null
   }, [special, stamps])
 
   const editImageUrl = useMemo(() => {
     if (!resolved) return null
     if (special.source === 'upload' && special.workingUrl) return special.workingUrl
-    const stamp = stamps.find((s) => s.id === special.stampId) ?? stamps[0]
-    return stamp?.workingUrl ?? null
+    if (!special.stampId) return null
+    return stamps.find((s) => s.id === special.stampId)?.workingUrl ?? null
   }, [resolved, special, stamps])
 
+  // アップロード完了後、state 反映を待って調整画面を開く
+  useEffect(() => {
+    if (!openEditorAfterUpload.current) return
+    if (special.source !== 'upload' || !special.workingUrl || !resolved) return
+    openEditorAfterUpload.current = false
+    setEditing(true)
+  }, [special, resolved])
+
   return (
-    <section className="panel">
+    <section className="panel special-panel">
       <div className="panel-head">
         <h2>{title}</h2>
-        <p>
-          {size.width}×{size.height}px
-        </p>
       </div>
 
       <div className="special-layout">
@@ -79,31 +86,24 @@ export function SpecialImageSection({
           />
         ) : (
           <div
-            className="special-preview"
+            className="special-preview special-preview-empty"
             style={{
               aspectRatio: `${size.width} / ${size.height}`,
               maxWidth: kind === 'main' ? 180 : 120,
               width: '100%',
-              border: '1px solid var(--line)',
-              borderRadius: 12,
-              display: 'grid',
-              placeItems: 'center',
-              color: 'var(--muted)',
-              background: '#f7f9fb',
             }}
-          >
-            未設定
-          </div>
+            aria-hidden="true"
+          />
         )}
 
         <div className="special-actions">
-          <p className="special-source">
-            {special.source === 'upload'
-              ? `アップロード：${special.originalName || '済み'}`
-              : special.stampId
-                ? 'スタンプから選択中'
-                : '未設定'}
-          </p>
+          {(special.source === 'upload' || special.stampId) && (
+            <p className="special-source">
+              {special.source === 'upload'
+                ? `アップロード：${special.originalName || '済み'}`
+                : 'スタンプから選択中'}
+            </p>
+          )}
           <button
             type="button"
             className="btn"
@@ -112,8 +112,13 @@ export function SpecialImageSection({
           >
             スタンプから選ぶ
           </button>
-          <button type="button" className="btn" onClick={() => inputRef.current?.click()}>
-            アップロード
+          <button
+            type="button"
+            className="btn"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+          >
+            {uploading ? '読み込み中…' : 'アップロード'}
           </button>
           <button
             type="button"
@@ -155,8 +160,14 @@ export function SpecialImageSection({
         hidden
         onChange={(e) => {
           const file = e.target.files?.[0]
-          if (file) onUpload(file)
           e.target.value = ''
+          if (!file) return
+          openEditorAfterUpload.current = true
+          setUploading(true)
+          void onUpload(file).then((ok) => {
+            setUploading(false)
+            if (!ok) openEditorAfterUpload.current = false
+          })
         }}
       />
 

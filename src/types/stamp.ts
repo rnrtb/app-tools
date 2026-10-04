@@ -1,9 +1,4 @@
-export type PreviewBackground =
-  | 'checker'
-  | 'gray'
-  | 'line'
-  | 'lineLight'
-  | 'lineDark'
+export type PreviewBackground = 'gray' | 'line' | 'lineLight' | 'lineDark'
 
 export interface TransformState {
   scale: number

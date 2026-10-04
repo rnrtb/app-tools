@@ -26,8 +26,8 @@ npm run preview
 | --- | --- |
 | `/` | ツール一覧 |
 | `/line` | LINE関連ツール一覧 |
-| `/line/stamp` | LINEスタンプ画像メーカー（ガイド） |
-| `/line/stamp/maker` | 作成ツール本体 |
+| `/line/stamp` | `/line/stamp/maker` へリダイレクト（旧ガイドURL・QR用） |
+| `/line/stamp/maker` | LINEスタンプ画像メーカー |
 
 ## デプロイ時の注意（SPA）
 

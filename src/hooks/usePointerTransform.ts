@@ -4,7 +4,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
-  type WheelEvent as ReactWheelEvent,
+  type RefObject,
 } from 'react'
 import type { TransformState } from '../types/stamp'
 import { createCenterTransform, createFitTransform } from '../lib/image/fit'
@@ -18,6 +18,8 @@ interface UsePointerTransformOptions {
   initial: TransformState
   minScale?: number
   maxScale?: number
+  /** wheel の preventDefault 用（passive: false で紐づける） */
+  wheelTargetRef?: RefObject<HTMLElement | null>
 }
 
 function distance(a: PointerEvent, b: PointerEvent) {
@@ -43,6 +45,7 @@ export function usePointerTransform(options: UsePointerTransformOptions) {
     initial,
     minScale = 0.05,
     maxScale = 8,
+    wheelTargetRef,
   } = options
 
   const [transform, setTransform] = useState<TransformState>(initial)
@@ -193,19 +196,29 @@ export function usePointerTransform(options: UsePointerTransformOptions) {
     }
   }, [])
 
-  const onWheel = useCallback(
-    (event: ReactWheelEvent<HTMLElement>) => {
+  // React の onWheel は passive になり preventDefault できないため、ネイティブで購読する
+  useEffect(() => {
+    const el = wheelTargetRef?.current
+    if (!el) return
+
+    const onWheel = (event: WheelEvent) => {
       event.preventDefault()
-      const rect = event.currentTarget.getBoundingClientRect()
+      event.stopPropagation()
+      const rect = el.getBoundingClientRect()
+      if (rect.width <= 0 || rect.height <= 0) return
       const displayScaleX = canvasWidth / rect.width
       const displayScaleY = canvasHeight / rect.height
       const pointX = (event.clientX - rect.left) * displayScaleX
       const pointY = (event.clientY - rect.top) * displayScaleY
       const factor = event.deltaY > 0 ? 0.9 : 1.1
       setTransform((current) => applyScaleAtPoint(current, current.scale * factor, pointX, pointY))
-    },
-    [applyScaleAtPoint, canvasWidth, canvasHeight],
-  )
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+    }
+  }, [wheelTargetRef, applyScaleAtPoint, canvasWidth, canvasHeight])
 
   const fit = useCallback(() => {
     setTransform(
@@ -246,7 +259,6 @@ export function usePointerTransform(options: UsePointerTransformOptions) {
       onPointerMove,
       onPointerUp,
       onPointerCancel: onPointerUp,
-      onWheel,
     },
   }
 }

@@ -22,7 +22,7 @@ export function getCountStatus(count: number): {
     return {
       ok: false,
       title: '0枚',
-      message: '画像を選んでください。対応枚数は 8 / 16 / 24 / 32 / 40 枚です。',
+      message: 'まだ画像がありません',
     }
   }
 
@@ -30,7 +30,7 @@ export function getCountStatus(count: number): {
     return {
       ok: true,
       title: `${count}枚`,
-      message: `${count}枚：作成できます`,
+      message: '枚数がそろいました',
     }
   }
 
@@ -39,7 +39,7 @@ export function getCountStatus(count: number): {
   return {
     ok: false,
     title: `${count}枚`,
-    message: `現在${count}枚です。${hint}に調整してください。`,
+    message: `${hint}に調整してください`,
   }
 }
 

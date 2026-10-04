@@ -1,15 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { CopyPromptStep } from '../components/maker/CopyPromptStep'
 import { ImagePicker } from '../components/maker/ImagePicker'
+import { MakerStepNav } from '../components/maker/MakerStepNav'
+import { MakerStepper } from '../components/maker/MakerStepper'
 import { SpecialImageSection } from '../components/maker/SpecialImageSection'
 import { StampList } from '../components/maker/StampList'
 import { TransformEditor } from '../components/maker/TransformEditor'
 import { ValidationPanel } from '../components/maker/ValidationPanel'
 import { ZipExport } from '../components/maker/ZipExport'
-import { PREVIEW_BACKGROUND_OPTIONS } from '../constants/previewBackground'
+import { BackgroundSwitch } from '../components/common/BackgroundSwitch'
+import { MAKER_STEPS, type MakerStepId, stepIndex } from '../constants/makerSteps'
 import { getStampSpec } from '../config/stampSpecs'
 import { useStampProject } from '../hooks/useStampProject'
+import { resolveSpecialSource } from '../lib/project/factory'
 import { getCountStatus } from '../lib/validation/validate'
+
+function clampStep(id: MakerStepId, maxReachable: MakerStepId): MakerStepId {
+  return stepIndex(id) <= stepIndex(maxReachable) ? id : maxReachable
+}
 
 export function StampMakerPage() {
   const {
@@ -18,14 +27,11 @@ export function StampMakerPage() {
     restoreAvailable,
     continueRestore,
     startFresh,
-    saveStatus,
-    saveError,
     actionError,
     setActionError,
     undo,
     undoRemove,
     addFiles,
-    replaceStamp,
     removeStamp,
     reorderStamps,
     updateStampTransform,
@@ -39,10 +45,42 @@ export function StampMakerPage() {
     updateTabTransform,
   } = useStampProject()
 
+  const [step, setStep] = useState<MakerStepId>('stamps')
   const [editingId, setEditingId] = useState<string | null>(null)
   const spec = getStampSpec()
   const countStatus = getCountStatus(project.stamps.length)
   const editingStamp = project.stamps.find((s) => s.id === editingId) ?? null
+
+  const mainReady = Boolean(resolveSpecialSource(project.main, project.stamps))
+  const tabReady = Boolean(resolveSpecialSource(project.tab, project.stamps))
+  const coverReady = mainReady && tabReady
+
+  const maxReachable: MakerStepId = useMemo(() => {
+    if (!countStatus.ok) return 'stamps'
+    if (!coverReady) return 'cover'
+    // ZIP まで進めたら、説明文ステップも開ける（中身は今後追加）
+    return 'copy'
+  }, [countStatus.ok, coverReady])
+
+  useEffect(() => {
+    setStep((current) => clampStep(current, maxReachable))
+  }, [maxReachable])
+
+  const goTo = (id: MakerStepId) => {
+    setStep(clampStep(id, maxReachable))
+  }
+
+  const goNext = () => {
+    const i = stepIndex(step)
+    const next = MAKER_STEPS[i + 1]
+    if (next) goTo(next.id)
+  }
+
+  const goBack = () => {
+    const i = stepIndex(step)
+    const prev = MAKER_STEPS[i - 1]
+    if (prev) goTo(prev.id)
+  }
 
   if (!ready) {
     return (
@@ -67,7 +105,7 @@ export function StampMakerPage() {
             </button>
           </div>
           <p>
-            <Link to="/line/stamp">使い方ガイドへ戻る</Link>
+            <Link to="/line">LINE関連ツールへ戻る</Link>
           </p>
         </section>
       </main>
@@ -81,96 +119,152 @@ export function StampMakerPage() {
           <Link to="/">ツール一覧</Link>
           <span aria-hidden="true">/</span>
           <Link to="/line">LINE</Link>
-          <span aria-hidden="true">/</span>
-          <Link to="/line/stamp">スタンプメーカー</Link>
         </nav>
         <h1>LINEスタンプ画像メーカー</h1>
-        <p className="lede">画像を選んで、LINE用ZIPをかんたん作成。</p>
-        <p className="privacy-badge" role="note">
-          画像はこの端末内だけで処理されます
-        </p>
-        <p className="save-status" role="status">
-          {saveStatus === 'saving' && '保存中…'}
-          {saveStatus === 'saved' && 'この端末に保存済み'}
-          {saveStatus === 'error' && (saveError || '保存に失敗しました')}
-          {saveStatus === 'idle' && '自動保存されます'}
-        </p>
       </header>
 
-      <section className="panel">
-        <div className="panel-head">
-          <h2>画像追加</h2>
-          <p>複数選択できます。あとから追加も可能です。</p>
-        </div>
-        <ImagePicker onFiles={(files) => void addFiles(files)} />
-        {actionError && (
-          <p className="notice notice-error" role="alert">
-            {actionError}
-            <button type="button" className="btn btn-small" onClick={() => setActionError(null)}>
-              閉じる
-            </button>
-          </p>
-        )}
-      </section>
+      <MakerStepper current={step} maxReachable={maxReachable} onSelect={goTo} />
 
-      <section className="panel count-panel">
-        <div className={`count-display ${countStatus.ok ? 'is-ok' : 'is-ng'}`}>
-          <strong>{countStatus.title}</strong>
-          <span>{countStatus.message}</span>
-        </div>
-        <div className="bg-switch" role="group" aria-label="一覧のプレビュー背景">
-          {PREVIEW_BACKGROUND_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              className={project.previewBackground === opt.value ? 'is-active' : ''}
-              onClick={() => setPreviewBackground(opt.value)}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </section>
+      {step === 'stamps' && (
+        <>
+          {project.stamps.length === 0 ? (
+            <section className="panel">
+              <ImagePicker onFiles={(files) => void addFiles(files)} />
+              {actionError && (
+                <p className="notice notice-error" role="alert">
+                  {actionError}
+                  <button type="button" className="btn btn-small" onClick={() => setActionError(null)}>
+                    閉じる
+                  </button>
+                </p>
+              )}
+            </section>
+          ) : (
+            <section className="panel">
+              <div className="panel-head">
+                <div>
+                  <h2>スタンプ一覧</h2>
+                  <p className="panel-subhint">
+                    タップで編集・ドラッグで順番を並べ替え
+                  </p>
+                </div>
+                <BackgroundSwitch
+                  value={project.previewBackground}
+                  onChange={setPreviewBackground}
+                  ariaLabel="一覧のプレビュー背景"
+                />
+              </div>
+              {actionError && (
+                <p className="notice notice-error" role="alert">
+                  {actionError}
+                  <button type="button" className="btn btn-small" onClick={() => setActionError(null)}>
+                    閉じる
+                  </button>
+                </p>
+              )}
+              <StampList
+                stamps={project.stamps}
+                previewBackground={project.previewBackground}
+                onEdit={setEditingId}
+                onDelete={removeStamp}
+                onReorder={reorderStamps}
+                onAddFiles={(files) => void addFiles(files)}
+              />
+            </section>
+          )}
 
-      <section className="panel">
-        <div className="panel-head">
-          <h2>スタンプ画像</h2>
-          <p>編集・差し替え・削除・並べ替えができます</p>
-        </div>
-        <StampList
-          stamps={project.stamps}
-          previewBackground={project.previewBackground}
-          onEdit={setEditingId}
-          onReplace={(id, file) => void replaceStamp(id, file)}
-          onDelete={removeStamp}
-          onReorder={reorderStamps}
-        />
-      </section>
+          <MakerStepNav
+            onNext={goNext}
+            nextLabel="② メイン・タブ画像へ"
+            nextDisabled={!countStatus.ok}
+            stampCount={project.stamps.length}
+            countMessage={
+              project.stamps.length === 0
+                ? undefined
+                : countStatus.ok
+                  ? '枚数がそろいました。次へ進めます'
+                  : '8 / 16 / 24 / 32 / 40 枚にそろえてください'
+            }
+            nextHintTone={countStatus.ok ? 'ok' : 'warn'}
+          />
+        </>
+      )}
 
-      <SpecialImageSection
-        kind="main"
-        special={project.main}
-        stamps={project.stamps}
-        previewBackground={project.previewBackground}
-        onPreviewBackgroundChange={setPreviewBackground}
-        onSelectStamp={selectMainFromStamp}
-        onUpload={(file) => void uploadMain(file)}
-        onTransformComplete={updateMainTransform}
-      />
+      {step === 'cover' && (
+        <>
+          <section className="panel">
+            <div className="panel-head">
+              <h2>2. メイン・タブ画像</h2>
+              <p>スタンプ一覧から選ぶか、画像をアップロードして調整します</p>
+            </div>
+          </section>
 
-      <SpecialImageSection
-        kind="tab"
-        special={project.tab}
-        stamps={project.stamps}
-        previewBackground={project.previewBackground}
-        onPreviewBackgroundChange={setPreviewBackground}
-        onSelectStamp={selectTabFromStamp}
-        onUpload={(file) => void uploadTab(file)}
-        onTransformComplete={updateTabTransform}
-      />
+          <div className="cover-grid">
+            <SpecialImageSection
+              kind="main"
+              special={project.main}
+              stamps={project.stamps}
+              previewBackground={project.previewBackground}
+              onPreviewBackgroundChange={setPreviewBackground}
+              onSelectStamp={selectMainFromStamp}
+              onUpload={uploadMain}
+              onTransformComplete={updateMainTransform}
+            />
 
-      <ValidationPanel project={project} />
-      <ZipExport project={project} onZipNameChange={setZipName} />
+            <SpecialImageSection
+              kind="tab"
+              special={project.tab}
+              stamps={project.stamps}
+              previewBackground={project.previewBackground}
+              onPreviewBackgroundChange={setPreviewBackground}
+              onSelectStamp={selectTabFromStamp}
+              onUpload={uploadTab}
+              onTransformComplete={updateTabTransform}
+            />
+          </div>
+
+          <MakerStepNav
+            onBack={goBack}
+            onNext={goNext}
+            nextLabel="ZIP作成へ"
+            nextDisabled={!coverReady}
+            nextHint={
+              coverReady
+                ? 'メイン画像とトークルームタブ画像の準備ができました'
+                : 'メイン画像とトークルームタブ画像の両方を設定してください'
+            }
+            nextHintTone={coverReady ? 'ok' : 'warn'}
+          />
+        </>
+      )}
+
+      {step === 'zip' && (
+        <>
+          <section className="panel">
+            <div className="panel-head">
+              <h2>3. ZIP作成</h2>
+              <p>内容を確認して、Creators Market 用のZIPを作成します</p>
+            </div>
+          </section>
+
+          <ValidationPanel project={project} />
+          <ZipExport project={project} onZipNameChange={setZipName} />
+
+          <MakerStepNav
+            onBack={goBack}
+            onNext={goNext}
+            nextLabel="タイトル・説明文へ"
+            nextHint="ZIP作成のあと、タイトル・説明文用のサポート（準備中）へ進めます。"
+          />
+        </>
+      )}
+
+      {step === 'copy' && (
+        <>
+          <CopyPromptStep />
+          <MakerStepNav onBack={goBack} backLabel="ZIP作成へ戻る" />
+        </>
+      )}
 
       {undo && (
         <div className="undo-toast" role="status">
@@ -200,6 +294,10 @@ export function StampMakerPage() {
           }}
         />
       )}
+
+      <p className="disclaimer">
+        本ツールはLINEヤフー株式会社の公式サービスではありません。
+      </p>
     </main>
   )
 }
