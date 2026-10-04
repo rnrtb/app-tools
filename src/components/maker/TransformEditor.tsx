@@ -15,7 +15,7 @@ interface Props {
   safeMargin: number
   initialTransform: TransformState
   previewBackground: PreviewBackgroundType
-  onPreviewBackgroundChange: (value: PreviewBackgroundType) => void
+  onPreviewBackgroundChange?: (value: PreviewBackgroundType) => void
   onCancel: () => void
   onComplete: (transform: TransformState) => void
 }
@@ -134,11 +134,13 @@ export function TransformEditor({
         <header className="modal-header">
           <h2>{title}</h2>
           <div className="modal-header-right">
-            <BackgroundSwitch
-              value={previewBackground}
-              onChange={onPreviewBackgroundChange}
-              ariaLabel="プレビュー背景"
-            />
+            {onPreviewBackgroundChange && (
+              <BackgroundSwitch
+                value={previewBackground}
+                onChange={onPreviewBackgroundChange}
+                ariaLabel="プレビュー背景"
+              />
+            )}
             <button type="button" className="btn btn-ghost" onClick={onCancel} aria-label="閉じる">
               閉じる
             </button>

@@ -24,6 +24,7 @@ export function MakerStepNav({
   const showCount = typeof stampCount === 'number' && stampCount > 0
   const showHintCard = !showCount && Boolean(nextHint) && nextHintTone !== 'normal'
   const showPlainHint = !showCount && Boolean(nextHint) && nextHintTone === 'normal'
+  const stackCentered = showCount || showHintCard || !onBack
   const toneClass =
     nextHintTone === 'warn' ? 'is-warn' : nextHintTone === 'ok' ? 'is-ok' : ''
 
@@ -54,7 +55,7 @@ export function MakerStepNav({
         </p>
       )}
 
-      <div className={`maker-step-nav-actions ${onBack ? '' : 'is-next-only'}`}>
+      <div className={`maker-step-nav-actions ${stackCentered ? 'is-centered' : ''}`}>
         {onBack && (
           <button type="button" className="btn" onClick={onBack}>
             {backLabel}

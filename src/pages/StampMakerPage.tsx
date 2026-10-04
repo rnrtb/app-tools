@@ -76,12 +76,6 @@ export function StampMakerPage() {
     if (next) goTo(next.id)
   }
 
-  const goBack = () => {
-    const i = stepIndex(step)
-    const prev = MAKER_STEPS[i - 1]
-    if (prev) goTo(prev.id)
-  }
-
   if (!ready) {
     return (
       <main className="page">
@@ -194,37 +188,45 @@ export function StampMakerPage() {
         <>
           <section className="panel">
             <div className="panel-head">
-              <h2>2. メイン・タブ画像</h2>
-              <p>スタンプ一覧から選ぶか、画像をアップロードして調整します</p>
+              <div>
+                <h2>メイン・タブ画像</h2>
+                <p className="panel-subhint">
+                  スタンプから選ぶか、画像をアップロードして調整します
+                </p>
+              </div>
+              <BackgroundSwitch
+                value={project.previewBackground}
+                onChange={setPreviewBackground}
+                ariaLabel="メイン・タブのプレビュー背景"
+              />
+            </div>
+
+            <div className="cover-grid">
+              <SpecialImageSection
+                kind="main"
+                special={project.main}
+                stamps={project.stamps}
+                previewBackground={project.previewBackground}
+                onPreviewBackgroundChange={setPreviewBackground}
+                onSelectStamp={selectMainFromStamp}
+                onUpload={uploadMain}
+                onTransformComplete={updateMainTransform}
+              />
+
+              <SpecialImageSection
+                kind="tab"
+                special={project.tab}
+                stamps={project.stamps}
+                previewBackground={project.previewBackground}
+                onPreviewBackgroundChange={setPreviewBackground}
+                onSelectStamp={selectTabFromStamp}
+                onUpload={uploadTab}
+                onTransformComplete={updateTabTransform}
+              />
             </div>
           </section>
 
-          <div className="cover-grid">
-            <SpecialImageSection
-              kind="main"
-              special={project.main}
-              stamps={project.stamps}
-              previewBackground={project.previewBackground}
-              onPreviewBackgroundChange={setPreviewBackground}
-              onSelectStamp={selectMainFromStamp}
-              onUpload={uploadMain}
-              onTransformComplete={updateMainTransform}
-            />
-
-            <SpecialImageSection
-              kind="tab"
-              special={project.tab}
-              stamps={project.stamps}
-              previewBackground={project.previewBackground}
-              onPreviewBackgroundChange={setPreviewBackground}
-              onSelectStamp={selectTabFromStamp}
-              onUpload={uploadTab}
-              onTransformComplete={updateTabTransform}
-            />
-          </div>
-
           <MakerStepNav
-            onBack={goBack}
             onNext={goNext}
             nextLabel="ZIP作成へ"
             nextDisabled={!coverReady}
@@ -251,7 +253,6 @@ export function StampMakerPage() {
           <ZipExport project={project} onZipNameChange={setZipName} />
 
           <MakerStepNav
-            onBack={goBack}
             onNext={goNext}
             nextLabel="タイトル・説明文へ"
             nextHint="ZIP作成のあと、タイトル・説明文用のサポート（準備中）へ進めます。"
@@ -259,12 +260,7 @@ export function StampMakerPage() {
         </>
       )}
 
-      {step === 'copy' && (
-        <>
-          <CopyPromptStep />
-          <MakerStepNav onBack={goBack} backLabel="ZIP作成へ戻る" />
-        </>
-      )}
+      {step === 'copy' && <CopyPromptStep />}
 
       {undo && (
         <div className="undo-toast" role="status">

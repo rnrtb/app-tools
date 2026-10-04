@@ -35,8 +35,10 @@ export function SpecialImageSection({
   const size = kind === 'main' ? spec.mainSize : spec.tabSize
   const safeMargin = kind === 'main' ? 8 : 4
   const title = kind === 'main' ? 'メイン画像' : 'トークルームタブ画像'
+  /** メイン画像は Creators Market 上でも明るい背景なのでライト固定 */
+  const effectiveBackground = kind === 'main' ? 'lineLight' : previewBackground
   const inputRef = useRef<HTMLInputElement>(null)
-  const openEditorAfterUpload = useRef(false)
+  const openEditorAfterChange = useRef(false)
   const [editing, setEditing] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -56,34 +58,40 @@ export function SpecialImageSection({
     return stamps.find((s) => s.id === special.stampId)?.workingUrl ?? null
   }, [resolved, special, stamps])
 
-  // アップロード完了後、state 反映を待って調整画面を開く
+  // 選択・アップロード後、state 反映を待って調整画面を開く
   useEffect(() => {
-    if (!openEditorAfterUpload.current) return
-    if (special.source !== 'upload' || !special.workingUrl || !resolved) return
-    openEditorAfterUpload.current = false
+    if (!openEditorAfterChange.current) return
+    if (!resolved || !editImageUrl) return
+    openEditorAfterChange.current = false
     setEditing(true)
-  }, [special, resolved])
+  }, [special, resolved, editImageUrl])
 
   return (
-    <section className="panel special-panel">
-      <div className="panel-head">
-        <h2>{title}</h2>
-      </div>
+    <div className="special-block">
+      <h3 className="special-block-title">{title}</h3>
 
       <div className="special-layout">
-        {previewUrl && resolved ? (
-          <CompositionPreview
-            className="special-preview"
-            imageUrl={previewUrl}
-            imageWidth={resolved.width}
-            imageHeight={resolved.height}
-            canvasWidth={size.width}
-            canvasHeight={size.height}
-            transform={resolved.transform}
-            previewBackground={previewBackground}
-            alt={`${title}プレビュー`}
+        {previewUrl && resolved && editImageUrl ? (
+          <button
+            type="button"
+            className="special-preview-button"
+            onClick={() => setEditing(true)}
+            aria-label={`${title}の位置・大きさを調整`}
             style={{ maxWidth: kind === 'main' ? 180 : 120, width: '100%' }}
-          />
+          >
+            <CompositionPreview
+              className="special-preview"
+              imageUrl={previewUrl}
+              imageWidth={resolved.width}
+              imageHeight={resolved.height}
+              canvasWidth={size.width}
+              canvasHeight={size.height}
+              transform={resolved.transform}
+              previewBackground={effectiveBackground}
+              alt=""
+              style={{ width: '100%' }}
+            />
+          </button>
         ) : (
           <div
             className="special-preview special-preview-empty"
@@ -92,8 +100,9 @@ export function SpecialImageSection({
               maxWidth: kind === 'main' ? 180 : 120,
               width: '100%',
             }}
-            aria-hidden="true"
-          />
+          >
+            未設定
+          </div>
         )}
 
         <div className="special-actions">
@@ -141,8 +150,13 @@ export function SpecialImageSection({
                 type="button"
                 className={special.stampId === stamp.id ? 'is-active' : ''}
                 onClick={() => {
-                  onSelectStamp(stamp.id)
                   setPickerOpen(false)
+                  if (special.stampId === stamp.id && resolved && editImageUrl) {
+                    setEditing(true)
+                    return
+                  }
+                  openEditorAfterChange.current = true
+                  onSelectStamp(stamp.id)
                 }}
               >
                 <img src={stamp.thumbUrl} alt="" />
@@ -162,11 +176,11 @@ export function SpecialImageSection({
           const file = e.target.files?.[0]
           e.target.value = ''
           if (!file) return
-          openEditorAfterUpload.current = true
+          openEditorAfterChange.current = true
           setUploading(true)
           void onUpload(file).then((ok) => {
             setUploading(false)
-            if (!ok) openEditorAfterUpload.current = false
+            if (!ok) openEditorAfterChange.current = false
           })
         }}
       />
@@ -181,8 +195,8 @@ export function SpecialImageSection({
           canvasHeight={size.height}
           safeMargin={safeMargin}
           initialTransform={resolved.transform}
-          previewBackground={previewBackground}
-          onPreviewBackgroundChange={onPreviewBackgroundChange}
+          previewBackground={effectiveBackground}
+          onPreviewBackgroundChange={kind === 'main' ? undefined : onPreviewBackgroundChange}
           onCancel={() => setEditing(false)}
           onComplete={(transform) => {
             onTransformComplete(transform)
@@ -190,6 +204,6 @@ export function SpecialImageSection({
           }}
         />
       )}
-    </section>
+    </div>
   )
 }
