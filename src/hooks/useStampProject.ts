@@ -13,6 +13,7 @@ import {
 } from '../lib/project/factory'
 import { clearProject, loadProject, saveProject } from '../lib/storage/db'
 import { toUserFriendlyError } from '../lib/utils/errors'
+import { normalizePreviewBackground } from '../constants/previewBackground'
 import type {
   PreviewBackground,
   SpecialImageState,
@@ -295,7 +296,10 @@ export function useStampProject() {
 
   const setPreviewBackground = useCallback(
     (previewBackground: PreviewBackground) => {
-      updateProject((prev) => ({ ...prev, previewBackground }))
+      updateProject((prev) => ({
+        ...prev,
+        previewBackground: normalizePreviewBackground(previewBackground),
+      }))
     },
     [updateProject],
   )

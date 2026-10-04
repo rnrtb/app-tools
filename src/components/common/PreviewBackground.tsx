@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import type { PreviewBackground as PreviewBackgroundType } from '../../types/stamp'
+import { normalizePreviewBackground } from '../../constants/previewBackground'
 
 const STYLES: Record<PreviewBackgroundType, CSSProperties> = {
   checker: {
@@ -9,12 +10,10 @@ const STYLES: Record<PreviewBackgroundType, CSSProperties> = {
     backgroundSize: '16px 16px',
     backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0',
   },
-  white: { backgroundColor: '#ffffff' },
   /** LINE default light — sticker panel */
   lineLight: { backgroundColor: '#ffffff' },
   /** LINE default dark — sticker panel */
   lineDark: { backgroundColor: '#1A1A1A' },
-  black: { backgroundColor: '#111111' },
   gray: { backgroundColor: '#9aa0a6' },
   line: {
     backgroundColor: '#7494c0',
@@ -23,17 +22,17 @@ const STYLES: Record<PreviewBackgroundType, CSSProperties> = {
 }
 
 interface Props {
-  variant: PreviewBackgroundType
+  variant: PreviewBackgroundType | string
   className?: string
   style?: CSSProperties
   children?: ReactNode
 }
 
 export function PreviewBackground({ variant, className, style, children }: Props) {
+  const resolved = normalizePreviewBackground(variant)
   return (
-    <div className={className} style={{ ...STYLES[variant], ...style }}>
+    <div className={className} style={{ ...STYLES[resolved], ...style }}>
       {children}
     </div>
   )
 }
-

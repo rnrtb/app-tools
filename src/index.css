@@ -522,6 +522,16 @@ input {
   color: #7a5200;
 }
 
+/* 表示・非表示でレイアウトが上下しないよう常に高さを確保 */
+.editor-margin-notice {
+  margin-top: 12px;
+  min-height: 3.2em;
+}
+
+.editor-margin-notice.is-placeholder {
+  visibility: hidden;
+}
+
 .notice-error {
   background: #fdeceb;
   color: var(--danger);
@@ -576,7 +586,7 @@ input {
   max-width: 100%;
   max-height: min(58vh, 520px);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -590,10 +600,18 @@ input {
   user-select: none;
 }
 
+.editor-canvas > img {
+  z-index: 0;
+}
+
 .editor-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
+  overflow: visible;
 }
 
 .zoom-row {

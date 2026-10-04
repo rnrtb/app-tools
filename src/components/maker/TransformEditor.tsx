@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { isOutsideSafeArea } from '../../lib/image/fit'
+import { getFitScale, isOutsideSafeArea } from '../../lib/image/fit'
 import { usePointerTransform } from '../../hooks/usePointerTransform'
 import type { PreviewBackground as PreviewBackgroundType, TransformState } from '../../types/stamp'
 import { PREVIEW_BACKGROUND_OPTIONS } from '../../constants/previewBackground'
@@ -36,14 +36,25 @@ export function TransformEditor({
 }: Props) {
   const stageRef = useRef<HTMLDivElement>(null)
   const [image, setImage] = useState<HTMLImageElement | null>(null)
-  const { transform, fit, center, setScale, handlers } = usePointerTransform({
+
+  /** 「最初に戻す」＝100% として扱う基準スケール */
+  const fitScale = useMemo(
+    () => getFitScale(imageWidth, imageHeight, { width: canvasWidth, height: canvasHeight }, safeMargin),
+    [imageWidth, imageHeight, canvasWidth, canvasHeight, safeMargin],
+  )
+
+  const { transform, fit, setScale, handlers } = usePointerTransform({
     canvasWidth,
     canvasHeight,
     imageWidth,
     imageHeight,
     safeMargin,
     initial: initialTransform,
+    minScale: fitScale * 0.25,
+    maxScale: fitScale * 4,
   })
+
+  const relativeZoom = transform.scale / fitScale
 
   useEffect(() => {
     let cancelled = false
@@ -162,13 +173,14 @@ export function TransformEditor({
                 aria-hidden="true"
                 style={{ pointerEvents: 'none' }}
               >
+                {/* 点線ガイドは画像の上にオーバーレイ */}
                 <rect
                   x={safeMargin + guideInset}
                   y={safeMargin + guideInset}
                   width={canvasWidth - safeMargin * 2 - guideInset * 2}
                   height={canvasHeight - safeMargin * 2 - guideInset * 2}
                   fill="none"
-                  stroke="rgba(15, 23, 42, 0.55)"
+                  stroke="rgba(15, 23, 42, 0.65)"
                   strokeDasharray="6 4"
                   strokeWidth={2}
                   vectorEffect="non-scaling-stroke"
@@ -178,36 +190,32 @@ export function TransformEditor({
           </PreviewBackground>
         </div>
 
-        {outside && (
-          <p className="notice notice-warn" role="status">
-            推奨の余白（約{safeMargin}px）を超えています。必要なら「全体を収める」で戻せます。
-          </p>
-        )}
+        <p
+          className={`notice notice-warn editor-margin-notice${outside ? '' : ' is-placeholder'}`}
+          role="status"
+          aria-hidden={!outside}
+        >
+          推奨の余白（約{safeMargin}px）を超えています。必要なら「最初に戻す」で戻せます。
+        </p>
 
         <div className="zoom-row">
           <label htmlFor="zoom-slider">拡大</label>
           <input
             id="zoom-slider"
             type="range"
-            min={0.05}
+            min={0.25}
             max={4}
             step={0.01}
-            value={Math.min(4, Math.max(0.05, transform.scale))}
-            onChange={(e) => setScale(Number(e.target.value))}
-            aria-label="拡大率"
+            value={Math.min(4, Math.max(0.25, relativeZoom))}
+            onChange={(e) => setScale(Number(e.target.value) * fitScale)}
+            aria-label="拡大率（最初に戻すときが100%）"
           />
-          <span>{Math.round(transform.scale * 100)}%</span>
+          <span>{Math.round(relativeZoom * 100)}%</span>
         </div>
 
         <div className="modal-actions">
           <button type="button" className="btn" onClick={fit}>
-            全体を収める
-          </button>
-          <button type="button" className="btn" onClick={center}>
-            中央に戻す
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={onCancel}>
-            キャンセル
+            最初に戻す
           </button>
           <button type="button" className="btn btn-primary" onClick={() => onComplete(transform)}>
             完了

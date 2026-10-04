@@ -5,6 +5,18 @@ export interface CanvasSize {
   height: number
 }
 
+/** 「最初に戻す」時の絶対スケール（安全領域に全体が収まる最大倍率） */
+export function getFitScale(
+  imageWidth: number,
+  imageHeight: number,
+  canvas: CanvasSize,
+  safeMarginPx: number,
+): number {
+  const safeW = Math.max(1, canvas.width - safeMarginPx * 2)
+  const safeH = Math.max(1, canvas.height - safeMarginPx * 2)
+  return Math.min(safeW / imageWidth, safeH / imageHeight)
+}
+
 /**
  * 安全領域内に画像全体が収まる最大倍率で中央配置する。
  */
@@ -14,9 +26,7 @@ export function createFitTransform(
   canvas: CanvasSize,
   safeMarginPx: number,
 ): TransformState {
-  const safeW = Math.max(1, canvas.width - safeMarginPx * 2)
-  const safeH = Math.max(1, canvas.height - safeMarginPx * 2)
-  const scale = Math.min(safeW / imageWidth, safeH / imageHeight)
+  const scale = getFitScale(imageWidth, imageHeight, canvas, safeMarginPx)
   const drawW = imageWidth * scale
   const drawH = imageHeight * scale
 

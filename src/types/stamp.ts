@@ -1,7 +1,5 @@
 export type PreviewBackground =
   | 'checker'
-  | 'white'
-  | 'black'
   | 'gray'
   | 'line'
   | 'lineLight'

@@ -2,11 +2,11 @@ import { createFitTransform } from '../image/fit'
 import { optimizeInputImage } from '../image/optimize'
 import { createId } from '../utils/id'
 import { getStampSpec } from '../../config/stampSpecs'
+import { normalizePreviewBackground } from '../../constants/previewBackground'
 import type {
   PersistedProject,
   PersistedSpecialImage,
   PersistedStampItem,
-  PreviewBackground,
   SpecialImageState,
   StampImageItem,
   StampProject,
@@ -194,7 +194,7 @@ export function fromPersistedProject(data: PersistedProject): StampProject {
     main: fromPersistedSpecial(data.main),
     tab: fromPersistedSpecial(data.tab),
     zipName: data.zipName || 'line-stamp',
-    previewBackground: (data.previewBackground || 'checker') as PreviewBackground,
+    previewBackground: normalizePreviewBackground(data.previewBackground),
     updatedAt: data.updatedAt,
   }
 }
