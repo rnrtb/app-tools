@@ -10,11 +10,8 @@ export function ValidationPanel({ project }: Props) {
   const result = useMemo(() => validateProjectLight(project), [project])
 
   return (
-    <section className="panel">
-      <div className="panel-head">
-        <h2>最終チェック</h2>
-        <p>ZIP作成前の自動確認</p>
-      </div>
+    <div className="zip-section">
+      <h3 className="zip-section-title">最終チェック</h3>
 
       <ul className="check-list">
         {result.items.map((item) => (
@@ -26,11 +23,11 @@ export function ValidationPanel({ project }: Props) {
           </li>
         ))}
       </ul>
-      <p className={`check-summary ${result.canCreateZip ? 'is-ok' : 'is-ng'}`} role="status">
-        {result.canCreateZip
-          ? 'LINE Creators Market用のZIPを作成できます'
-          : 'まだZIPを作成できません。上の項目を確認してください'}
-      </p>
-    </section>
+      {!result.canCreateZip && (
+        <p className="check-summary is-ng" role="status">
+          まだZIPを作成できません。上の項目を確認してください
+        </p>
+      )}
+    </div>
   )
 }

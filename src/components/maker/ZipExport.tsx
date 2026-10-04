@@ -44,11 +44,9 @@ export function ZipExport({ project, onZipNameChange }: Props) {
   }
 
   return (
-    <section className="panel">
-      <div className="panel-head">
-        <h2>ZIP生成</h2>
-        <p>ブラウザ内だけで作成します。画像はサーバーへ送られません。</p>
-      </div>
+    <div className="zip-section">
+      <h3 className="zip-section-title">ZIP生成</h3>
+      <p className="zip-section-hint">ブラウザ内だけで作成します。画像はサーバーへ送られません。</p>
 
       <label className="field">
         <span>ZIPファイル名</span>
@@ -88,10 +86,10 @@ export function ZipExport({ project, onZipNameChange }: Props) {
       <p className="hint">
         作成後は{' '}
         <a href="https://creator.line.me/signup/line_auth" target="_blank" rel="noreferrer">
-          Creators Marketへ進む
+          Creators Market
         </a>
-        （ログインしてZIPをアップロード）
+        へ進む（ログインしてZIPをアップロード）
       </p>
-    </section>
+    </div>
   )
 }

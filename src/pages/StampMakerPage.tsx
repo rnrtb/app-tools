@@ -228,7 +228,7 @@ export function StampMakerPage() {
 
           <MakerStepNav
             onNext={goNext}
-            nextLabel="ZIP作成へ"
+            nextLabel="③ ZIP作成へ"
             nextDisabled={!coverReady}
             nextHint={
               coverReady
@@ -244,17 +244,21 @@ export function StampMakerPage() {
         <>
           <section className="panel">
             <div className="panel-head">
-              <h2>3. ZIP作成</h2>
-              <p>内容を確認して、Creators Market 用のZIPを作成します</p>
+              <h2>ZIP作成</h2>
+              <p className="panel-subhint">
+                内容を確認して、Creators Market 用のZIPを作成します
+              </p>
+            </div>
+
+            <div className="zip-panel-body">
+              <ValidationPanel project={project} />
+              <ZipExport project={project} onZipNameChange={setZipName} />
             </div>
           </section>
 
-          <ValidationPanel project={project} />
-          <ZipExport project={project} onZipNameChange={setZipName} />
-
           <MakerStepNav
             onNext={goNext}
-            nextLabel="タイトル・説明文へ"
+            nextLabel="④ タイトル・説明文へ"
             nextHint="ZIP作成のあと、タイトル・説明文用のサポート（準備中）へ進めます。"
           />
         </>

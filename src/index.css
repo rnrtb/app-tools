@@ -765,6 +765,33 @@ input {
   border-radius: 8px;
 }
 
+.zip-panel-body {
+  display: grid;
+  gap: 20px;
+  margin-top: 4px;
+}
+
+.zip-section {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.zip-section-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.zip-section-hint {
+  margin: -4px 0 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
 .check-list {
   list-style: none;
   margin: 0;
@@ -797,12 +824,8 @@ input {
 }
 
 .check-summary {
-  margin: 16px 0 0;
-  font-weight: 700;
-}
-
-.check-summary.is-ok {
-  color: var(--ok);
+  margin: 0;
+  font-weight: 400;
 }
 
 .check-summary.is-ng {
