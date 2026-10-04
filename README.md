@@ -1,6 +1,6 @@
 # tools.mirai-study.com
 
-ブラウザだけで動く小規模Webツール集です。初版では **LINEスタンプ画像メーカー** を提供します。
+ブラウザだけで動く小規模Webツール集です。LINEスタンプ画像メーカーや漢字プリントメーカーなどを提供します。
 
 画像処理・ZIP生成・作業保存はすべてクライアントサイドで行い、ユーザー画像をサーバーへ送信しません。
 
@@ -28,10 +28,11 @@ npm run preview
 | `/line` | LINE関連ツール一覧 |
 | `/line/stamp` | `/line/stamp/maker` へリダイレクト（旧ガイドURL・QR用） |
 | `/line/stamp/maker` | LINEスタンプ画像メーカー |
+| `/worksheet/kanji/` | ラボ式・漢字プリントメーカー（静的ページ。旧 `kanji.mirai-study.com`） |
 
 ## デプロイ時の注意（SPA）
 
-React Router のクライアントルーティングを使うため、直接 `/line/stamp/maker` などにアクセスした場合も `index.html` を返す設定が必要です。
+React Router のクライアントルーティングを使うため、直接 `/line/stamp/maker` などにアクセスした場合も SPA の `index.html` を返す設定が必要です。`/worksheet/kanji/` は静的ファイルのため、SPA フォールバックから除外しています。
 
 - **Netlify**: `public/_redirects` を同梱済み
 - **Vercel**: ルートの `vercel.json` を同梱済み

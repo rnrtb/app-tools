@@ -1,3 +1,7 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/worksheet/kanji", "destination": "/worksheet/kanji/index.html" },
+    { "source": "/worksheet/kanji/", "destination": "/worksheet/kanji/index.html" },
+    { "source": "/((?!worksheet/kanji(?:/|$)).*)", "destination": "/index.html" }
+  ]
 }

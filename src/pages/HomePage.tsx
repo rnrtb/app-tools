@@ -14,6 +14,10 @@ export function HomePage() {
           <h2>LINE関連ツール</h2>
           <p>LINEスタンプ画像メーカーなど</p>
         </Link>
+        <a href="/worksheet/kanji/" className="tool-card">
+          <h2>漢字プリントメーカー</h2>
+          <p>ラボ式の漢字練習プリントを作成・印刷</p>
+        </a>
       </section>
     </main>
   )
